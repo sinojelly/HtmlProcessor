@@ -1,0 +1,64 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.7.3'
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+jar {
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    manifest { attributes 'Main-Class': 'org.jelly.html.HtmlProcessor' }
+}
+/*
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'eu.appsatori:gradle-fatjar-plugin:0.2-rc1'
+    }
+}
+
+apply plugin: 'fatjar'
+
+
+apply plugin: 'shadow'
+ 
+buildscript {
+    repositories {
+        maven {
+            name 'Shadow'
+            url 'http://dl.bintray.com/content/johnrengelman/gradle-plugins'
+        }
+    }
+    dependencies {
+        classpath 'org.gradle.plugins:shadow:0.7.4'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+ 
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.1.5'
+}
+ 
+version = '0.1'
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.jelly.html.HtmlProcessor'
+    }
+}
+
+dependencies {
+  compile group:'org.jdom',name:'jdom',version:'1.1'   // pom redirects to new groupId 'org.jdom'
+  compile group:'asm',name:'asm',version:'3.3.1'
+  compile group:'asm',name:'asm-commons',version:'3.3.1'
+}
+*/
