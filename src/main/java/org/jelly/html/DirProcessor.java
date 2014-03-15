@@ -21,7 +21,7 @@ import java.util.Collection;
  *  commandline parameter: -s path/to/input/dir -d path/to/dest/dir
  *
  *  Test:
- *  java -jar htmlprocessor.jar  -i ../../ -l ../../ -s D:\Develop\AndroidSDK\docs\guide -d D:\epub
+ *  java -jar htmlprocessor.jar  -i ../ -l ../ -s D:\Develop\AndroidSDK\docs\guide -d D:\epub
  */
 public class DirProcessor {
     private static DirProcessor mThis;
@@ -58,7 +58,7 @@ public class DirProcessor {
             HelpFormatter hf = new HelpFormatter();
             hf.printHelp("HtmlProcess: make html file to be suitable for epub.\n" +
                     "    java -jar htmlprocessor.jar [options] -s input_dir -d output_dir\n" +
-                    "eg: java -jar htmlprocessor.jar -i ../../ -l ../../ -s D:\\AndroidSDK\\docs -d D:\\epub\n", options);
+                    "eg: java -jar htmlprocessor.jar -i ../ -l ../ -s D:\\AndroidSDK\\docs -d D:\\epub\n", options);
             return false;
         }
 
@@ -83,7 +83,7 @@ public class DirProcessor {
     }
 
     private void processFile(String file) throws IOException, ParseException {
-        String[] options = Arrays.copyOf(remainOptions, remainOptions.length + 7);  // copy and add one more item
+        String[] options = Arrays.copyOf(remainOptions, remainOptions.length + 9);  // copy and add one more item
         options[options.length - 1] = file;
         options[options.length - 2] = FilenameUtils.concat(dstDirectory, file.replace(srcDirectory, ".")); // If second para is /a/b.html, can not concat.
         options[options.length - 3] = "-o";
@@ -91,6 +91,8 @@ public class DirProcessor {
         options[options.length - 5] = "-i";
         options[options.length - 6] = linkPattern;
         options[options.length - 7] = "-l";
+        options[options.length - 8] = dstDirectory;
+        options[options.length - 9] = "-d";
         FileUtils.copyFile(new File(file), new File(options[options.length - 2]));  // First copy the fist to dest path, this command can make dir if nessery.
         HtmlProcessor processor = new HtmlProcessor();
         processor.process(options);
