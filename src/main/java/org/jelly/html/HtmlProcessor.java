@@ -16,7 +16,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.cli.*;
 
 
-// Test:  java -jar htmlprocessor.jar D:\Develop\AndroidSDK\docs\guide\components\activities.html output.html
+// Test:
+// java -jar htmlprocessor.jar -i ../../ -l ../../ -o D:\epub\output.html D:\Develop\AndroidSDK\docs\guide\components\activities.html
 public class HtmlProcessor 
 {
     private static HtmlProcessor mThis;
@@ -27,6 +28,8 @@ public class HtmlProcessor
     private String outputDirPath;
     private Document inputDoc;
     private Document outputDoc;
+    private String imagePattern;
+    private String linkPattern;
 
     private synchronized static HtmlProcessor instance() {
         if (mThis == null) {
@@ -37,13 +40,11 @@ public class HtmlProcessor
 
     public static void main(String[] args) throws Exception
     {
-//        if (args.length < 2) {
-//            System.out.println("Usage: java -jar htmlprocessor.jar path/to/input/file path/to/output/file");
-//            return;
-//        }
-//        instance().processArgs(args);
-        String[] argsDebug = new String[]{"D:\\Develop\\AndroidSDK\\docs\\guide\\components\\activities.html", "output4.html"};
-        instance().processArgs(argsDebug);
+        if (!instance().processArgs(args)) {
+            return;
+        }
+//        String[] argsDebug = new String[]{"D:\\Develop\\AndroidSDK\\docs\\guide\\components\\activities.html", "output4.html"};
+//        instance().processArgs(argsDebug);
         instance().redirectStdout2File();
         instance().openDocument();
         instance().constructHtml();
@@ -64,7 +65,8 @@ public class HtmlProcessor
     }
 
     private void processTrimUselessLinks() {
-        Elements elements = outputDoc.select("a[href^=../../]");
+        if (linkPattern == null) return;
+        Elements elements = outputDoc.select("a[href^=" + linkPattern + "]");
         elements.unwrap(); // remove the tag(<a href=..\..\*>), but keep text
     }
 
@@ -73,36 +75,29 @@ public class HtmlProcessor
         outputDoc.select("head").append(html);
     }
 
-    private void processArgs(String[] args) throws ParseException {
-        /*
+    private boolean processArgs(String[] args) throws ParseException {
         Options options = new Options();
         options.addOption("h", false, "Lists short help");   // -h  to list help
+        options.addOption("i", true, "Set the image path pattern that should reprocess."); // copy image, and modify src
+        options.addOption("l", true, "Set the link path pattern that should remove."); // remove useless links
         options.addOption("o", true, "Set the output file path.");
-        options.addOption("i", true, "Set the input file path.");
-        options.addOption("c", true, "Set the image path should copy."); // copy image, and modify src
-        options.addOption("r", true, "Set the link path should remove."); // remove useless links
 
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = parser.parse(options, args);
 
         if(cmd.hasOption("h")) {
             HelpFormatter hf = new HelpFormatter();
-            hf.printHelp("HtmlProcess: make html file to be approperate for epub.", options);
-            return;
+            hf.printHelp("HtmlProcess: make html file to be suitable for epub.\n" +
+                    "    java -jar htmlprocessor.jar options input_file\n" +
+                    "eg: java -jar htmlprocessor.jar -i ../../ -l ../../ -o D:\\epub\\output.html D:\\AndroidSDK\\docs\\activities.html\n", options);
+            return false;
         }
 
-        inputFilePath = cmd.getOptionValue("i");
+        imagePattern = cmd.getOptionValue("i");
+        linkPattern = cmd.getOptionValue("l");
         outputFilePath = cmd.getOptionValue("o");
-        inputFilePath = cmd.getOptionValue("c");
-        inputFilePath = cmd.getOptionValue("r");
+        inputFilePath = cmd.getArgs()[0];  // the left is:  inputFilePath
 
-        if(protocol == null) {
-            // 设置默认的 HTTP 传输协议
-        } else {
-            // 设置用户自定义的 HTTP 传输协议
-        }*/
-        inputFilePath = args[0];
-        outputFilePath = args[1];
         System.out.println("input: " + inputFilePath);
         System.out.println("output: " + outputFilePath);
 
@@ -111,6 +106,7 @@ public class HtmlProcessor
 
         File outputFile = new File(FilenameUtils.getFullPath(outputFilePath));
         outputDirPath = outputFile.getAbsolutePath();
+        return true;
     }
 
     private void processContent() {
@@ -119,7 +115,6 @@ public class HtmlProcessor
             System.out.println(String.format("ERROR: [FILE:%s]select div#jd-content size = %d." , inputFilePath, content.size()));
         }
         outputDoc.select("body").append(content.outerHtml());
-        //System.out.println(content.outerHtml());
     }
 
     private void processPrettyPrint() {
@@ -139,10 +134,6 @@ public class HtmlProcessor
     private void prettyInsertHead() {
         outputDoc.select("head").append("<script type=\"text/javascript\" src=\"google-code-prettify/prettify.js\"></script>");
         outputDoc.select("head").append("<link href=\"google-code-prettify/prettify.css\" type=\"text/css\" rel=\"stylesheet\" />");
-//        String style = "<style type=\"text/css\"> \n" +
-//                ".pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:bold}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:bold}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:bold}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}"
-//                +"</style>";
-//        outputDoc.select("head").append(style);
     }
 
     private void processImage() {
@@ -158,8 +149,9 @@ public class HtmlProcessor
     // copy image to outputPath/images
     // return new image_src
     private String processImageSrc(String image_src) {
+        if (imagePattern == null) return image_src;
         String imageSrcPath = FilenameUtils.concat(inputDirPath, image_src);
-        String dstPath = image_src.replaceAll("\\.\\./", "");
+        String dstPath = image_src.replaceAll(imagePattern, "");
 //        System.err.println("outputDirPath = " + outputDirPath);
 //        System.err.println("dstPath = " + dstPath);
         String imageDstPath = FilenameUtils.concat(outputDirPath, dstPath);
@@ -179,7 +171,6 @@ public class HtmlProcessor
             System.out.println(String.format("ERROR: [FILE:%s]select h1[itemprop=name] size = %d." , inputFilePath, title.size()));
         }
         outputDoc.select("body").prepend(title.outerHtml());
-        //System.out.println(title.outerHtml());
     }
 
     private void openDocument() throws IOException {
