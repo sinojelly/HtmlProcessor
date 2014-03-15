@@ -31,24 +31,30 @@ public class HtmlProcessor
     private String imagePattern;
     private String linkPattern;
 
-    private synchronized static HtmlProcessor instance() {
-        if (mThis == null) {
-            mThis = new HtmlProcessor();
-        }
-        return mThis;
+    HtmlProcessor() {
     }
 
-    public static void main(String[] args) throws Exception
-    {
-        if (!instance().processArgs(args)) {
+//    private synchronized static HtmlProcessor instance() {
+//        if (mThis == null) {
+//            mThis = new HtmlProcessor();
+//        }
+//        return mThis;
+//    }
+//
+//    private static void main(String[] args) throws Exception
+//    {
+//        instance().process(args);
+//    }
+
+    void process(String[] args) throws ParseException, IOException {
+        if (!processArgs(args)) {
             return;
         }
 //        String[] argsDebug = new String[]{"D:\\Develop\\AndroidSDK\\docs\\guide\\components\\activities.html", "output4.html"};
 //        instance().processArgs(argsDebug);
-        instance().redirectStdout2File();
-        instance().openDocument();
-        instance().constructHtml();
-
+        redirectStdout2File();
+        openDocument();
+        constructHtml();
     }
 
     private void constructHtml() {
