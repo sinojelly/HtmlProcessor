@@ -1,16 +1,16 @@
 
 var page = require('webpage').create(),
     system = require('system'),
-    t, address;
+    t, address, output;
 
-// 如果命令行没有给出网址
-if (system.args.length === 1) {
-    console.log('Usage: page.js <some URL>');
+if (system.args.length !== 3) {
+    console.log('Usage: url2src.js <some URL> <output File path>');
     phantom.exit();
 }
 
 t = Date.now();
 address = system.args[1];
+output = system.args[2];
 page.open(address, function (status) {
     if (status !== 'success') {
         console.log('FAIL to load the address : ' + address);
@@ -20,7 +20,13 @@ page.open(address, function (status) {
 		var js = page.evaluate(function () {
 			return document;
 		});
-		console.log(js.all[0].outerHTML); 
+		//console.log(js.all[0].outerHTML); 
+		var fs = require('fs');
+        try {
+		    fs.write(output, js.all[0].outerHTML, 'w');
+		} catch(e) {
+			console.log(e);
+		}
 	}
     phantom.exit();
 });

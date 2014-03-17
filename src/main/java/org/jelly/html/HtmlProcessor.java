@@ -5,6 +5,7 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 
 import org.apache.commons.io.FileUtils;
@@ -65,15 +66,24 @@ public class HtmlProcessor
 
     private void outputDocument() throws FileNotFoundException {
         if (useOriginalFile) return;   // the original file has been copied in DirProcessor.
-        redirectStdout2File();
-        System.out.println(outputDoc.outerHtml().replaceAll("—", "&mdash;"));
-        System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+        //redirectStdout2File();
+        //System.out.println(outputDoc.outerHtml());
+        //System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+        try {
+            FileOutputStream fos = new FileOutputStream(outputFilePath);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+            osw.write(outputDoc.outerHtml());
+            osw.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void constructHtml() {
         String html = "<html><head></head>"   // <title>First parse</title>
                 + "<body></body></html>";
         outputDoc = Jsoup.parse(html);
+        outputDoc.select("head").append("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">"); // Fix some words can not show problem.
         processTitle();
         processContent();
         processImage();
@@ -236,6 +246,7 @@ public class HtmlProcessor
             useOriginalFile = true;
         }
         outputDoc.select("body").prepend(title.outerHtml());
+        outputDoc.select("head").prepend("<title>" + title.text() + "</title>");
     }
 
     private void openDocument() throws IOException {
